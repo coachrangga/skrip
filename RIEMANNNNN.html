@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    
+        body {
+            padding-top: 0px;
+            padding-bottom: 0px;
+            background-color: rgb(3, 3, 3);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+        }
+    
+        /* Penyesuaian untuk video dengan rasio 16:9 */
+        video#bgVideo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 100vw;
+            height: 56.25vw; /* Mengatur tinggi berdasarkan rasio 16:9 (9/16 = 0.5625) */
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            object-fit: cover;
+        }
+    
+        label,
+        p {
+            color: #ececec;
+        }
+    
+        :root {
+            --form-control-color: rgb(13, 101, 189);
+        }
+    
+        input[type="text"] {
+            border: 5px solid rgb(5, 13, 20);
+            background-color: white;
+            border-radius: 8px;
+            color: black;
+        }
+    
+        input[type="radio"] {
+            appearance: none;
+            font: inherit;
+            color: currentColor;
+            width: 1.15em;
+            height: 1.15em;
+            border: 0.15em solid currentColor;
+            border-radius: 50%;
+            display: inline-flex;
+            place-content: center;
+        }
+    
+        input[type="radio"]::before {
+            content: "";
+            width: 0.85em;
+            height: 0.85em;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: 180ms transform ease-in-out;
+            box-shadow: inset 1000px 1000px var(--form-control-color);
+        }
+    
+        input[type="radio"]:checked::before {
+            transform: scale(1);
+        }
+    
+        button:hover {
+            transition-duration: 250ms;
+            background-color: white;
+            color: rgb(186, 6, 6);
+        }
+    
+        button {
+            background-color: rgb(186, 6, 6);
+            border-radius: 30px;
+            border-color: grey;
+            border: 10px grey;
+            color: white;
+            padding: 16px 32px;
+            text-decoration: none;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    
+        #foot {
+            overflow-wrap: break-word;
+            width: 70%;
+            position: absolute;
+            top: 1100px;
+        }
+    
+        #githubIcon {
+            border-radius: 200px;
+        }
+    
+        #defaultCanvas0 {
+            margin-left: 200px;
+            display: block;
+        }
+
+        .logo {
+          position: absolute;
+          top: 20px; /* Jarak dari atas */
+          right: 20px; /* Jarak dari kiri */
+          width: 100px; /* Lebar logo */
+          z-index: 1; /* Menempatkan logo di atas video */
+        }
+    </style>
+    
+    <script src="https://shintapd.github.io/skrip/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JUMLAHAN RIEMANN</title>
+  </head>
+
+  <header id="head">
+    <p>JUMLAHAN RIEMANN INTERAKTIF</p>
+  </header>
+
+  <body>
+    <!-- Video Background -->
+    <video id="bgVideo" autoplay muted loop>
+      <source src="https://shintapd.github.io/skrip/dalam.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <!-- Logo di pojok kiri atas -->
+    <img src="https://shintapd.github.io/skrip/unej.png" alt="Logo" class="logo">
+
+    <!-- Tambahkan elemen audio -->
+    <audio id="backgroundMusic" loop>
+      <source src="URL_LAGU_DI_SINI.mp3" type="audio/mpeg"> <!-- Ganti URL dengan sumber lagu Anda -->
+      Your browser does not support the audio tag.
+    </audio>
+
+
+    <label for="function">Input fungsi: </label>
+    <input type="text" id="function" size="10" value="x" onblur="myScript()" /><br /><br />
+    <label>Input batas bawah: </label>
+    <input type="text" id="lb" value="-10" size="5" onblur="myScript()" />
+    <label> Input batas atas: </label>
+    <input type="text" id="rb" value="10" size="5" onblur="myScript()" /><br /><br />
+    <label>Jumlah Partisi: </label>
+    <input type="text" id="n" value="10" size="5" onblur="myScript()" />
+    <button type="button" onclick="toInfinity()">Klik untuk menuju tak hingga</button><br /><br />
+    <form>
+      <label for="left"><input type="radio" id="left" value="left" onchange="myScript()" name="mode" checked="true">
+        Poligon dalam</label>
+
+      <label for="right"><input type="radio" id="right" value="right" onchange="myScript()" name="mode"> Poligon luar</label>
+
+      <label for="mid"><input type="radio" id="mid" value="mid" onchange="myScript()" name="mode"> Titik tengah</label>
+
+      <label for="trap"><input type="radio" id="trap" value="trap" name="mode" onchange="myScript()"> Trapezoid</label>
+    </form><br />
+
+    <label id="area">Luas aproksimasi: </label>
+
+    <div class="graph">
+      <script>
+        let coords = [];
+        let graph;
+        let expression;
+        let mode = "left"
+        let inf = false
+        const math = window.math
+
+
+        function setup() {
+          frameRate(10)
+          createCanvas(900, 800);
+          graph = new Graph();
+          graph.calibrateSkipX();
+          graph.calibrateScaleX();
+          graph.fillRange();
+          graph.calibrateSkipY();
+          graph.calibrateScaleY();
+          graph.drawGraph();
+          graph.executeFunction();
+        }
+
+        function draw() {
+          clear(); // This will clear the canvas with a transparent background
+          fill(236, 236, 236)
+          graph.drawGraph();
+          graph.drawFunction();
+          graph.setArea();
+          if(inf){
+            if(parseInt(document.getElementById('n').value) == 999){
+              inf = !inf
+            }
+            document.getElementById('n').value = parseInt(document.getElementById('n').value)+1
+            myScript();
+          }
+          switch(mode){
+            case "left":
+              graph.leftRiemann();
+              break;
+            case "right":
+              graph.rightRiemann();
+              break;
+            case "mid":
+              graph.midRiemann();
+              break;
+            default:
+              graph.trapRiemann();
+          }
+          //testing feature
+          //text(mouseX+ ' , '+mouseY, mouseX, mouseY);
+        }
+        let toInfinity = () => {
+          inf = !inf
+        }
+        let myScript = () => {
+          coords = [];
+          graph.range = [];
+          expression = document.getElementById('function').value;
+          graph.leftBoundary = parseFloat(document.getElementById('lb').value); graph.rightBoundary = parseFloat(document.getElementById('rb').value);
+          graph.n = parseInt(document.getElementById('n').value);
+          for(let i=0;i<4;i++){
+            if(document.getElementsByName("mode")[i].checked){ mode=document.getElementsByName("mode")[i].value; break;}
+          }
+          
+          graph.rectWidth = (graph.rightBoundary-graph.leftBoundary)/graph.n;
+          graph.calibrateSkipX();
+          graph.calibrateScaleX();
+          graph.fillRange();
+          graph.calibrateSkipY();
+          graph.calibrateScaleY();
+          graph.drawGraph();
+          graph.executeFunction();
+          
+        }
+
+
+        function Graph() {
+
+          this.xAxisPos;
+          expression = document.getElementById('function').value;
+          this.range = [];
+          this.leftBoundary = -10;
+          this.rightBoundary = 10;
+          this.n = 10;
+          this.rectWidth = (this.rightBoundary-this.leftBoundary)/this.n;
+          
+          
+          // scale is the ratio of pixels to units in the function
+          this.scale = createVector(64, 64);
+          // refers to the intervals for the labels on the x and y axis
+          this.skip = createVector(1, 1);
+
+          this.drawGraph = () => {
+            fill(236, 236, 236);
+            textSize(20);
+            //y axis
+            strokeWeight(3);
+            stroke(236, 236, 236);
+            line(180, 80, 180, 720);
+            strokeWeight(1);
+            text('sumbu y', 180, 40);
+            
+            
+            fill(236, 236, 236);
+            textAlign(RIGHT);
+            // draw the label lines on the y
+        
+            for (let i = 0; i <= 10; i++) {
+              stroke(236, 236, 236);
+              //short lines that create axis labels
+              line(175, i * 64+80, 185, i * 64+80);
+              //long lines that create grid
+              line(175, i * 64+80, 820, i * 64+80);
+              //Currently on:
+              textAlign(RIGHT);
+              if(math.abs(this.rMin()) > math.abs(this.rMax())){
+              currY = i*this.skip.y+this.rMin()
+              text(currY.toFixed(1),175, 720- i * 64)
+              if(currY == 0){
+                //Meant to accentuate X axis
+                strokeWeight(3);
+                line(180, 720- i * 64, 820, 720- i * 64);
+                strokeWeight(1)
+                
+                text('sumbu x',825, 720- i * 64)
+          
+                this.xAxisPos = 720- i * 64;
+              }
+            }else{
+              currY = this.rMax()-i*this.skip.y
+              text(currY.toFixed(1),175, 80+ i * 64)
+              if(currY == 0){
+                //Meant to accentuate X axis
+                strokeWeight(3);
+                line(180, 80+ i * 64, 820, 80+ i * 64);
+                strokeWeight(1)
+                
+                text('sumbu x',825, 80+ i * 64)
+                this.xAxisPos = 80+ i * 64;
+            }
+            }
+            
+            // draw the label lines on the x
+            textAlign(CENTER);
+            strokeWeight(1)
+            for (let i = 0; i <= 10; i++) {
+              //short lines that create axis labels
+              line(i * 64 + 180, 725, i * 64 + 180, 715);
+              //long lines that create grid
+              line(i * 64 + 180, 725, i * 64 + 180, 80);
+              text((this.leftBoundary+ i * this.skip.x).toFixed(1), i * 64 + 180, 745);
+            }
+
+          }
+            
+          };
+
+
+          //draws a bunch of small lines jumping by 1 pixel which generate the function
+          //This is why functions which are non-continuous look wonky, especially those with a jump discontinuity or a
+          this.drawFunction = () => {
+            strokeWeight(2)
+            fill(236, 236, 236, 200);
+            for(let i = 0; i<coords.length-1;i++){
+              line(coords[i].x, coords[i].y,coords[i+1].x, coords[i+1].y);
+              
+            }
+          }
+
+
+          this.leftRiemann = () => {
+            fill(13, 101, 189,200);
+            for(let i = 0; i< this.n; i++){
+              rect(180+i*this.rectWidth*this.scale.x,
+                this.determineY(i),
+                this.rectWidth * this.scale.x,
+                math.abs(evaluateAt(this.leftBoundary+(i)*this.rectWidth)) * this.scale.y
+                )
+            
+            };
+            };
+          this.rightRiemann = () => {
+            fill(13, 101, 189,200);
+            for(let i = 0; i< this.n; i++){
+              rect(180+i*this.rectWidth*this.scale.x,
+              this.determineY(i+1),
+              this.rectWidth * this.scale.x,
+              math.abs(evaluateAt(this.leftBoundary+(i+1)*this.rectWidth)) * this.scale.y
+              )
+            };
+            };
+          this.midRiemann = () => {
+            fill(13, 101, 189,200);
+            for(let i = 0; i< this.n; i++){
+              rect(180+i*this.rectWidth*this.scale.x,
+                this.determineY(i+0.5),
+                this.rectWidth * this.scale.x,
+                math.abs(evaluateAt(this.leftBoundary+(i+0.5)*this.rectWidth)) * this.scale.y)
+          }
+          };
+        //creates the trapezoids using p5js quad method and drawing the points in counter clockwise order
+        //trapezoidal rule is wonky when the shape has heights that are not in the same direction
+          this.trapRiemann = () => {
+            fill(13, 101, 189,200);
+            for(let i = 0;i<this.n;i++){
+              quad(180+i*this.rectWidth*this.scale.x, this.determineY(i),
+              180+i*this.rectWidth*this.scale.x, this.determineNotY(i),
+              180+(i+1)*this.rectWidth*this.scale.x, this.determineNotY(i+1),
+              180+(i+1)*this.rectWidth*this.scale.x, this.determineY(i+1))
+            }
+          }
+
+          this.executeFunction = () => {
+              //replaces the x in this.function and evaluates it then assigns the result to y which is pushed to coords
+              //coords are an array of vectors x,y which have the final positions at which the lines are to be drawn
+              
+              for(let i = 0; i<=640; i++){
+                coords.push(createVector(180 + i, this.xAxisPos - this.scale.y * evaluateAt(this.leftBoundary+ i/this.scale.x)));
+              }
+          }
+
+          this.calibrateSkipX = () =>{
+              this.skip.x = (this.rightBoundary-this.leftBoundary)/10;
+              
+          }
+          this.calibrateSkipY = () =>{
+            bigger = max([math.abs(this.rMax()), math.abs(this.rMin())])
+
+            this.skip.y = bigger/5;
+        }
+
+          this.calibrateScaleX = () => {
+              this.scale.x = 64/this.skip.x;
+
+          }
+          this.calibrateScaleY = () =>{
+
+            this.scale.y = 64/this.skip.y;
+        }
+          
+          this.fillRange = () => {
+            
+              for(let i = 0; i < 641; i++){
+                this.range.push(evaluateAt(this.leftBoundary + i/this.scale.x));
+              }
+
+          };
+          function evaluateAt(x){
+            let j;
+            j = math.eval(expression.replace(/x/g, `(${x})`));
+            if(Number.isNaN(j)){
+              return 0;
+            }else if(j == Infinity){
+              return 0;
+            }
+            return j;
+          }
+
+          this.determineY = (i) => {
+            maximum = max([0, evaluateAt(this.leftBoundary+i*this.rectWidth)]);
+            return 400-maximum*this.scale.y;
+          }
+          // this function returns the y value that determineY() does not
+          this.determineNotY = (i) => {
+            minimum = min([0, evaluateAt(this.leftBoundary+i*this.rectWidth)]);
+            return 400-minimum*this.scale.y;
+          }
+          this.rMax = () => {
+            maximum = max(this.range)
+            if(maximum < 0){
+              return 0;
+            }
+            return maximum;
+          }
+          this.rMin = () => {
+            minimum = min(this.range)
+            if(minimum > 0){
+              return 0;
+            }
+            return minimum;
+          }
+
+          this.setArea = () => {
+            label = document.getElementById('area')
+            sum = 0;
+            switch(mode){
+              case "left":
+                for(let i = 0; i<this.n; i++){
+                  sum+=this.rectWidth*evaluateAt(this.leftBoundary+(i)*this.rectWidth)
+                } 
+                break;
+              case "right":
+                for(let i = 0; i<this.n; i++){
+                  sum+=this.rectWidth*evaluateAt(this.leftBoundary+(i+1)*this.rectWidth)
+                } 
+                break;
+              case "mid":
+                for(let i = 0; i<this.n; i++){
+                  sum+=this.rectWidth*evaluateAt(this.leftBoundary+(i+0.5)*this.rectWidth)
+                } 
+                break;
+              default:
+                for(let i = 0; i<this.n; i++){
+                  sum+=this.rectWidth*(evaluateAt(this.leftBoundary+(i)*this.rectWidth)+evaluateAt(this.leftBoundary+(i+1)*this.rectWidth))/2
+                } 
+            }
+
+            label.innerHTML = "Approximate Area: " + sum.toFixed(5);
+          }
+        }
+      </script>
+    </div>
+  </body>
+
+  <footer id="foot">
+    <p>
+      Laboratorium Pendidikan Matematika, FKIP, Unversitas Jember
+    <p>Shinta Permata Dewi (220210101003)</p>
+  </footer>
+</html>
